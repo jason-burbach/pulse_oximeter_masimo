@@ -35,6 +35,70 @@ between her breathing and other external factors.
 3. Raspberry Pi Zero W         (Or practically any other flavor of computer. This was $9.00)
 4. Bosch bme280 Temp, Humidity & Pressure Sensor (Optional if weather data is desired)
 
+## Environment Setup & Deployment with uv
+
+This project uses [uv](https://docs.astral.sh/uv/) to manage its Python interpreter, virtual environment,
+and dependencies. The toolchain is pinned end to end for reproducibility:
+
+- **`.python-version`** pins the interpreter to **Python 3.14**. uv installs this exact version itself (a
+  standalone build) on any machine — the dev box and the Pi included — so it never depends on whatever
+  system Python happens to be present.
+- **`pyproject.toml`** declares the dependencies.
+- **`uv.lock`** pins the exact resolved versions of every dependency for reproducible installs.
+
+To change the interpreter version, run `uv python pin <version>` (this rewrites `.python-version`) followed
+by `uv sync`.
+
+### Install uv (dev machine and Raspberry Pi)
+
+```sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+The standalone installer fetches the correct prebuilt binary automatically (aarch64 on 64-bit Raspberry
+Pi OS, armv7 on 32-bit). Re-open the shell or run `source ~/.bashrc` so `uv` is on your `PATH`.
+
+### Local development
+
+First create the environment with uv, then activate it like any standard virtual environment:
+
+```sh
+uv sync                          # create .venv/ and install deps from uv.lock
+uv sync --extra weather          # also install smbus2 + RPi.bme280 for bme_influx.py
+
+source .venv/bin/activate        # activate the venv (uv creates a standard .venv/)
+python pox_2_influx.py           # now `python` is the project interpreter
+deactivate                       # exit the venv when done
+```
+
+Upgrade the dependencies by running
+
+```shell
+# Main Dependencies
+uv pip compile --upgrade --no-emit-index-url pyproject.toml
+
+# Weather dependencies
+uv pip compile --upgrade --no-emit-index-url --extra weather pyproject.toml -o requirements-weather.txt
+```
+
+Use `uv sync` again whenever dependencies change, and `uv add <package>` to add one (it updates both
+`pyproject.toml` and `uv.lock`).
+
+### Deploying to the Raspberry Pi
+
+After the code (including `uv.lock`) is synced to the Pi, install the locked dependencies:
+
+```sh
+uv sync --extra weather          # or plain `uv sync` if not using the BME280
+```
+
+For the cron-driven `graf_keep_going.sh`, call the venv's interpreter by its path directly — no
+activation needed, which is exactly what you want in a non-interactive cron job:
+
+```sh
+./.venv/bin/python ./pox_2_influx.py &
+```
+
 ## Grafana Dashboard for Pulse Oximeter Data w/ Inside Weather
 
 ![alt text](pulse_grafana_screenshot1.png)

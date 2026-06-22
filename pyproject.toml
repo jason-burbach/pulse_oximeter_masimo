@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pulse-oximeter-masimo"
+version = "0.1.0"
+description = "Read serial data from a Masimo Rad-8 Pulse Oximeter (and a Bosch BME280 sensor) and write it to InfluxDB for Grafana visualization."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Jason Burbach", email = "jason.m.burbach@gmail.com" },
+]
+keywords = ["masimo", "rad-8", "pulse-oximeter", "influxdb", "grafana", "bme280", "raspberry-pi"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Scientific/Engineering",
+]
+
+# Direct runtime dependencies. The full transitive set is pinned in requirements.txt.
+dependencies = [
+    "influxdb_client[ciso]",
+    "pyserial",
+]
+
+[project.optional-dependencies]
+# Optional weather-data correlation via the Bosch BME280 sensor (bme_influx.py).
+weather = [
+    "smbus2",
+    "RPi.bme280",
+]
+
+[project.urls]
+Homepage = "https://github.com/jburbach/pulse_oximeter_masimo"
+Repository = "https://github.com/jburbach/pulse_oximeter_masimo"
+
+[tool.setuptools]
+py-modules = ["pox_2_influx", "bme_influx"]
